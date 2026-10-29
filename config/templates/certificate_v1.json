@@ -1,0 +1,19 @@
+{
+  "name": "certificate_v1",
+  "orientation_degrees": 90,
+  "table_region": [0.08, 0.12, 0.93, 0.86],
+  "header_rows": 1,
+  "row_height_ratio": 0.055,
+  "columns": [
+    {"name": "No", "x0": 0.00, "x1": 0.06, "kind": "numeric"},
+    {"name": "JSP no", "x0": 0.06, "x1": 0.18, "kind": "identifier"},
+    {"name": "Heat no", "x0": 0.18, "x1": 0.30, "kind": "identifier"},
+    {"name": "Coil no", "x0": 0.30, "x1": 0.47, "kind": "identifier"},
+    {"name": "Size", "x0": 0.47, "x1": 0.64, "kind": "text"},
+    {"name": "Grade", "x0": 0.64, "x1": 0.73, "kind": "text"},
+    {"name": "C", "x0": 0.73, "x1": 0.78, "kind": "numeric"},
+    {"name": "Si", "x0": 0.78, "x1": 0.83, "kind": "numeric"},
+    {"name": "Mn", "x0": 0.83, "x1": 0.88, "kind": "numeric"},
+    {"name": "CEQ", "x0": 0.88, "x1": 0.94, "kind": "numeric"}
+  ]
+}
