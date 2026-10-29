@@ -1,7 +1,8 @@
 from PIL import Image
+import numpy as np
 
 from hrc_reconcile.models import FieldStatus
-from hrc_reconcile.ocr import OcrDetection, ocr_certificate
+from hrc_reconcile.ocr import OcrDetection, RapidOcrEngine, ocr_certificate
 from hrc_reconcile.review import apply_review_edit, confirm_review
 from hrc_reconcile.templates import load_template
 
@@ -39,6 +40,20 @@ def test_ocr_excludes_configured_header_rows_from_data_crops():
     engine = FakeEngine()
     ocr_certificate(Image.new("RGB", (100, 100)), TEMPLATE, engine, row_count=2)
     assert set(engine.heights) == {35}
+
+
+def test_rapidocr_adapter_converts_pil_image_to_numpy_array():
+    captured = {}
+
+    class UnderlyingEngine:
+        def __call__(self, image):
+            captured["image"] = image
+            return [], None
+
+    engine = RapidOcrEngine.__new__(RapidOcrEngine)
+    engine._engine = UnderlyingEngine()
+    assert engine.read(Image.new("RGB", (20, 20), "white")) == []
+    assert isinstance(captured["image"], np.ndarray)
 
 
 def test_review_edit_replaces_ocr_value_and_confirmation_unlocks_session():

@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+import numpy as np
 from PIL import Image, ImageOps
 
 from .models import OcrCell, ReviewSession
@@ -28,7 +29,7 @@ class RapidOcrEngine:
         self._engine = RapidOCR()
 
     def read(self, image: Image.Image) -> list[OcrDetection]:
-        result, _ = self._engine(image)
+        result, _ = self._engine(np.asarray(image.convert("RGB")))
         return [OcrDetection(text=item[1], confidence=float(item[2]), bounding_box=tuple(item[0][0] + item[0][2])) for item in result or []]
 
 

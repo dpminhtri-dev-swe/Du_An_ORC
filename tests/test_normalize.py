@@ -37,6 +37,14 @@ def test_sample_csv_normalizes_formula_identifiers_and_aliases():
     assert table.loc[0, "Mn"] == 135.0
 
 
+def test_csv_with_a_title_row_finds_the_real_header():
+    titled_fixture = Path(__file__).parent / "fixtures" / "hrc_with_title.csv"
+    table = normalize_company_table(load_company_table(titled_fixture))
+
+    assert table.loc[0, "Heat no"] == "355818"
+    assert table.loc[0, "Coil no"] == "3180730000"
+
+
 def test_required_columns_are_reported_when_missing():
     with pytest.raises(ValueError, match="Heat no"):
         normalize_company_table(pd.DataFrame({"JSP no": ["26-1"]}))
