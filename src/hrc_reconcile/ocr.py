@@ -26,7 +26,7 @@ class RapidOcrEngine:
     def __init__(self) -> None:
         from rapidocr_onnxruntime import RapidOCR
 
-        self._engine = RapidOCR()
+        self._engine = RapidOCR(use_text_det=False, use_angle_cls=False)
 
     def read(self, image: Image.Image) -> list[OcrDetection]:
         result, _ = self._engine(np.asarray(image.convert("RGB")))

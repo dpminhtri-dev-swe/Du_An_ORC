@@ -12,7 +12,7 @@ from hrc_reconcile.preprocess import deskew_document, load_document_pages, orien
 from hrc_reconcile.reporting import build_report_workbook
 from hrc_reconcile.review import confirm_review
 from hrc_reconcile.templates import load_template
-from hrc_reconcile.ui import apply_editor_values, can_compare, review_dataframe
+from hrc_reconcile.ui import apply_editor_values, can_compare, ocr_workload_message, review_dataframe
 
 
 ROOT = Path(__file__).parent
@@ -35,12 +35,16 @@ def main() -> None:
 
     document_file = st.file_uploader("2. Tải ảnh/PDF chứng từ", type=["jpg", "jpeg", "png", "pdf"])
     row_count = st.number_input("Số dòng Coil cần OCR", min_value=1, max_value=200, value=15, step=1)
+    st.caption(ocr_workload_message(int(row_count)))
+    if row_count > 25:
+        st.warning("Số dòng cao sẽ mất thời gian. Với ảnh mẫu hiện tại, hãy nhập 19 dòng Coil.")
     if document_file is not None and st.button("Chạy OCR cục bộ"):
         try:
-            template = load_template(TEMPLATE_PATH)
-            page = deskew_document(orient_document(load_document_pages(document_file, document_file.name)[0], template))
-            st.session_state.review = ocr_certificate(page, template, RapidOcrEngine(), int(row_count))
-            st.session_state.review.source_name = document_file.name
+            with st.spinner(f"Đang OCR {int(row_count) * 9} ô, vui lòng chờ…"):
+                template = load_template(TEMPLATE_PATH)
+                page = deskew_document(orient_document(load_document_pages(document_file, document_file.name)[0], template))
+                st.session_state.review = ocr_certificate(page, template, RapidOcrEngine(), int(row_count))
+                st.session_state.review.source_name = document_file.name
             st.success("OCR hoàn tất. Hãy kiểm tra và sửa bảng trước khi xác nhận.")
         except Exception as exc:
             st.error(f"OCR thất bại: {exc}")

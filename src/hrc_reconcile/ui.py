@@ -24,3 +24,7 @@ def apply_editor_values(session: ReviewSession, edited: pd.DataFrame) -> ReviewS
 
 def can_compare(session: ReviewSession) -> bool:
     return bool(session.confirmed)
+
+
+def ocr_workload_message(row_count: int) -> str:
+    return f"OCR sẽ đọc {row_count * 9} ô ({row_count} dòng × 9 cột)."

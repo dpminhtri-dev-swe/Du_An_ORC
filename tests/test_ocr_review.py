@@ -1,5 +1,7 @@
 from PIL import Image
 import numpy as np
+import sys
+import types
 
 from hrc_reconcile.models import FieldStatus
 from hrc_reconcile.ocr import OcrDetection, RapidOcrEngine, ocr_certificate
@@ -54,6 +56,18 @@ def test_rapidocr_adapter_converts_pil_image_to_numpy_array():
     engine._engine = UnderlyingEngine()
     assert engine.read(Image.new("RGB", (20, 20), "white")) == []
     assert isinstance(captured["image"], np.ndarray)
+
+
+def test_rapidocr_adapter_disables_detection_for_pre_cropped_cells(monkeypatch):
+    captured = {}
+
+    class FakeRapidOCR:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setitem(sys.modules, "rapidocr_onnxruntime", types.SimpleNamespace(RapidOCR=FakeRapidOCR))
+    RapidOcrEngine()
+    assert captured == {"use_text_det": False, "use_angle_cls": False}
 
 
 def test_review_edit_replaces_ocr_value_and_confirmation_unlocks_session():
