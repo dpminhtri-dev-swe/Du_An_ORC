@@ -79,4 +79,18 @@ def compare_matches(match_result: MatchResult, tolerances: ToleranceConfig) -> l
             document = document_by_field.get(field)
             cells.append(compare_field(company.get(field), document.value if document else None, field, tolerances.values.get(field, 0.0), document.confidence if document else 1.0, tolerances.manual_review_confidence_threshold))
         rows.append(ComparisonRow(key, tuple(cells), _row_status(cells)))
+    for company in match_result.company_only:
+        key = f"{company.get('Heat no')}|{company.get('Coil no')}"
+        cells = [compare_field(value, None, field, tolerances.values.get(field, 0.0), 1.0, tolerances.manual_review_confidence_threshold) for field, value in company.items() if field not in _INTERNAL_FIELDS]
+        rows.append(ComparisonRow(key, tuple(cells), FieldStatus.MISSING_ON_DOCUMENT, "No matching document row"))
+    for document_cells in match_result.document_only:
+        cells = tuple(compare_field(None, document.value, document.field, tolerances.values.get(document.field, 0.0), document.confidence, tolerances.manual_review_confidence_threshold) for document in document_cells)
+        rows.append(ComparisonRow(document_cells[0].row_key or "document-only", cells, FieldStatus.MISSING_IN_COMPANY_DATA, "No matching company row"))
+    for key, cells in match_result.ambiguous_document.items():
+        rows.append(ComparisonRow(key, tuple(), FieldStatus.MANUAL_REVIEW, "Duplicate document match key; manual resolution required"))
+    for key in match_result.duplicate_keys:
+        if key not in match_result.ambiguous_document:
+            rows.append(ComparisonRow(key, tuple(), FieldStatus.MANUAL_REVIEW, "Duplicate company match key; manual resolution required"))
+    for key in match_result.incomplete_keys:
+        rows.append(ComparisonRow(key, tuple(), FieldStatus.MANUAL_REVIEW, "Incomplete match key; manual resolution required"))
     return rows

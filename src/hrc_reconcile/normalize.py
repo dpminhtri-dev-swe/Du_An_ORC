@@ -29,6 +29,7 @@ _FIELD_ALIASES = {
 }
 
 _IDENTIFIER_FIELDS = {"JSP no", "Heat no", "Coil no", "Sample ID"}
+_NUMERIC_FIELDS = {"Width In(mm)", "Width Out (mm)", "Thickness (mm)", "Net Weight (kg)", "Gross Weight (kg)", "YPT", "TS", "EL", "YS", "C", "Si", "Mn", "P", "S", "Nb", "V", "Ti", "Cu", "Ni", "Cr", "Mo", "Sn", "B", "N", "CEQ", "PCM", "Weight used other"}
 
 
 def canonicalize_field_name(name: object) -> str:
@@ -48,6 +49,8 @@ def _unwrap_formula(value: object) -> str:
 def clean_identifier(value: object) -> str | None:
     if value is None or (isinstance(value, float) and math.isnan(value)):
         return None
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
     text = _unwrap_formula(value).strip()
     return text or None
 
@@ -79,6 +82,8 @@ def normalize_company_table(df: pd.DataFrame) -> pd.DataFrame:
     for column in result.columns:
         if column in _IDENTIFIER_FIELDS:
             result[column] = result[column].map(clean_identifier)
-        elif column not in {"Size", "Chemical", "Mechanical", "Grade", "Other"}:
+        elif column in _NUMERIC_FIELDS:
             result[column] = result[column].map(clean_numeric)
+        else:
+            result[column] = result[column].map(clean_identifier)
     return result

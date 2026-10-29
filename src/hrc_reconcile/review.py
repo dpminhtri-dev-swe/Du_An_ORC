@@ -20,7 +20,7 @@ def apply_review_edit(session: ReviewSession, row_key: str, field: str, value: s
     for cell in session.cells:
         if cell.row_key == row_key and cell.field == field:
             normalized = _normalize(field, value)
-            updated.append(replace(cell, raw_text=value, value=normalized, normalized_value=normalized, manually_edited=True))
+            updated.append(replace(cell, raw_text=value, value=normalized, normalized_value=normalized, confidence=None, manually_edited=True))
             found = True
         else:
             updated.append(cell)

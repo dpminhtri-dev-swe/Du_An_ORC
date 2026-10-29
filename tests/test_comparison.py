@@ -34,6 +34,18 @@ def test_compare_matches_returns_cell_level_results():
     assert statuses["C"] is FieldStatus.MATCH
 
 
+def test_compare_matches_includes_company_and_document_only_rows_for_audit():
+    company = pd.DataFrame([{"Heat no": "355818", "Coil no": "3180730000"}])
+    review = ReviewSession(cells=[
+        OcrCell("355819|3180730001", "Heat no", "355819", "355819", "355819", 0.99),
+        OcrCell("355819|3180730001", "Coil no", "3180730001", "3180730001", "3180730001", 0.99),
+    ], confirmed=True)
+    rows = compare_matches(match_rows(company, review), ToleranceConfig())
+    assert {row.status for row in rows} == {FieldStatus.MISSING_ON_DOCUMENT, FieldStatus.MISSING_IN_COMPANY_DATA}
+    document_row = next(row for row in rows if row.status is FieldStatus.MISSING_IN_COMPANY_DATA)
+    assert {cell.field for cell in document_row.cells} == {"Heat no", "Coil no"}
+
+
 def test_tolerances_reject_negative_values():
     try:
         load_tolerances({"C": -0.1})

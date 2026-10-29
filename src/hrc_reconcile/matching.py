@@ -23,7 +23,7 @@ def build_match_key(row: Any) -> str | None:
     return f"{heat_value}|{coil_value}"
 
 
-def _document_rows(session: ReviewSession) -> tuple[dict[str, list[OcrCell]], list[str]]:
+def _document_rows(session: ReviewSession) -> tuple[dict[str, list[list[OcrCell]]], list[str]]:
     grouped: dict[str, list[OcrCell]] = defaultdict(list)
     for cell in session.cells:
         if cell.row_key:
@@ -36,7 +36,10 @@ def _document_rows(session: ReviewSession) -> tuple[dict[str, list[OcrCell]], li
         keys[row_key] = key
         if key is None:
             incomplete.append(row_key)
-    return {keys[row_key] or row_key: cells for row_key, cells in grouped.items()}, incomplete
+    normalized: dict[str, list[list[OcrCell]]] = defaultdict(list)
+    for row_key, cells in grouped.items():
+        normalized[keys[row_key] or row_key].append(cells)
+    return normalized, incomplete
 
 
 def match_rows(company_df: pd.DataFrame, review_session: ReviewSession) -> MatchResult:
@@ -52,21 +55,23 @@ def match_rows(company_df: pd.DataFrame, review_session: ReviewSession) -> Match
             company_by_key[key].append(row)
 
     document_by_key, document_incomplete = _document_rows(review_session)
-    duplicate_keys = tuple(sorted(key for key, rows in company_by_key.items() if len(rows) > 1))
+    document_duplicate_keys = {key for key, rows in document_by_key.items() if len(rows) > 1 and key not in document_incomplete}
+    duplicate_keys = tuple(sorted({key for key, rows in company_by_key.items() if len(rows) > 1} | document_duplicate_keys))
     matched: dict[str, tuple[Any, tuple[OcrCell, ...]]] = {}
     company_only: list[Any] = []
     for key, rows in company_by_key.items():
         if key in duplicate_keys:
             continue
         if key in document_by_key:
-            matched[key] = (rows[0], tuple(document_by_key[key]))
+            matched[key] = (rows[0], tuple(document_by_key[key][0]))
         else:
             company_only.append(rows[0])
-    document_only = tuple(cells[0] for key, cells in document_by_key.items() if key not in company_by_key)
+    document_only = tuple(tuple(rows[0]) for key, rows in document_by_key.items() if key not in company_by_key and key not in document_duplicate_keys)
     return MatchResult(
         matched=matched,
         company_only=tuple(company_only),
         document_only=document_only,
         duplicate_keys=duplicate_keys,
         incomplete_keys=tuple(company_incomplete + document_incomplete),
+        ambiguous_document={key: tuple(cell for row in rows for cell in row) for key, rows in document_by_key.items() if key in document_duplicate_keys},
     )

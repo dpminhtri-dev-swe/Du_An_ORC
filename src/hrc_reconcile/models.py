@@ -73,6 +73,7 @@ class ReviewSession:
 class MatchResult:
     matched: dict[str, tuple[Any, OcrCell | None]] = field(default_factory=dict)
     company_only: tuple[Any, ...] = ()
-    document_only: tuple[OcrCell, ...] = ()
+    document_only: tuple[tuple[OcrCell, ...], ...] = ()
     duplicate_keys: tuple[str, ...] = ()
     incomplete_keys: tuple[str, ...] = ()
+    ambiguous_document: dict[str, tuple[OcrCell, ...]] = field(default_factory=dict)

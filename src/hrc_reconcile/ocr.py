@@ -51,11 +51,13 @@ def ocr_certificate(image: Image.Image, template: CertificateTemplate, engine: O
     region_x0, region_y0, region_x1, region_y1 = template.table_region
     table_left, table_top = int(width * region_x0), int(height * region_y0)
     table_right, table_bottom = int(width * region_x1), int(height * region_y1)
-    row_height = max(1, (table_bottom - table_top) // max(row_count, 1))
+    header_height = int((table_bottom - table_top) * template.row_height_ratio * template.header_rows)
+    data_top = min(table_bottom - 1, table_top + header_height)
+    row_height = max(1, (table_bottom - data_top) // max(row_count, 1))
     cells: list[OcrCell] = []
     for row_number in range(row_count):
         values: dict[str, OcrDetection | None] = {}
-        row_top = table_top + row_number * row_height
+        row_top = data_top + row_number * row_height
         row_bottom = table_bottom if row_number == row_count - 1 else row_top + row_height
         for column in template.columns:
             if column.name == "No" or column.name not in _OCR_FIELDS:

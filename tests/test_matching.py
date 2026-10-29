@@ -31,5 +31,16 @@ def test_matching_separates_matched_missing_duplicate_and_incomplete_rows():
 
     assert "355818|3180730000" in result.duplicate_keys
     assert "355819|3180722000" in {build_match_key(row) for row in result.company_only}
-    assert "355820|3180000000" in {cell.row_key for cell in result.document_only}
+    assert "355820|3180000000" in {cells[0].row_key for cells in result.document_only}
     assert "incomplete" in result.incomplete_keys
+
+
+def test_duplicate_document_keys_are_not_silently_collapsed():
+    company = pd.DataFrame([{"Heat no": "355818", "Coil no": "3180730000"}])
+    review = ReviewSession(cells=[
+        _cell("first", "Heat no", "355818"), _cell("first", "Coil no", "3180730000"),
+        _cell("second", "Heat no", "355818"), _cell("second", "Coil no", "3180730000"),
+    ], confirmed=True)
+    result = match_rows(company, review)
+    assert "355818|3180730000" in result.duplicate_keys
+    assert not result.matched
